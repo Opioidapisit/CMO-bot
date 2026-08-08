@@ -25,9 +25,22 @@ app.post('/webhook', middleware(config), async (req, res) => {
   res.json(results);
 });
 
-// cron ping
-app.get('/', (req, res) => {
+// cron ping (ใช้กันเซิร์ฟเวอร์ sleep + กัน Supabase free-tier auto-pause)
+app.get('/', async (req, res) => {
   console.log('[cron] Ping received');
+
+  // ยิง query เบาๆ เข้า Supabase เพื่อนับเป็น activity กัน auto-pause
+  const { error } = await supabase
+    .from('price_updates')
+    .select('id')
+    .limit(1);
+
+  if (error) {
+    console.error('[cron] Supabase keep-alive failed:', error.message);
+  } else {
+    console.log('[cron] Supabase keep-alive OK');
+  }
+
   res.send('OK');
 });
 
